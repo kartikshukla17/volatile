@@ -1,36 +1,43 @@
 import React, { useContext, useState } from "react";
-import { fetchAllPassStatus } from "components/Soroban/Soroban";
+import { fetchAllProductStatus } from "components/Soroban/soroban1";
 import { pubKeyData } from "App";
 
-const CheckAllPassStatus = () => {
-  const [allPassStatus, setAllPassStatus] = useState({});
+const CheckAllProductStatus = () => {
+  const [allProductStatus, setAllProductStatus] = useState([0,0,0,0]);
 
   const pubKey = useContext(pubKeyData);
 
   const handleRefresh = async () => {
-    await fetchAllPassStatus(pubKey).then((values) => {
-      setAllPassStatus(values);
-    });
+    try {
+      const values = await fetchAllProductStatus(pubKey);
+      if (Array.isArray(values) && values.length === 4) {
+        setAllProductStatus(values);
+      } else {
+        console.error("Unexpected data format from fetchAllProductStatus");
+        setAllProductStatus([0, 0, 0, 0]);
+      }
+    } catch (error) {
+      console.error("Error fetching product status:", error);
+      setAllProductStatus([0, 0, 0, 0]);
+    }
   };
 
-  // console.log(allPassStatus);
-
   const allStatus = {
-    approved: allPassStatus[0] || 0,
-    expired: allPassStatus[1] || 0,
-    pending: allPassStatus[2] || 0,
-    total: allPassStatus[3] || 0,
+    approved: allProductStatus[0] || 0,
+    expired: allProductStatus[1] || 0,
+    pending: allProductStatus[2] || 0,
+    total: allProductStatus[3] || 0,
   };
 
   return (
     <div className="flex flex-col bg-white rounded-lg my-4 items-center border border-black p-4 min-w-max">
-    <div className="bg-black w-full p-2 rounded-md sm:text-2xl text-center flex gap-3 justify-between items-center font-bold text-white">
+      <div className="bg-black w-full p-2 rounded-md sm:text-2xl text-center flex gap-3 justify-between items-center font-bold text-white">
         Products Scanned
         <button
           className="text-lg hover:bg-violet-500 bg-pink-700 rounded-md p-1 font-bold text-white"
           onClick={handleRefresh}
         >
-          clear
+          Refresh
         </button>
       </div>
       <div className="text-center flex justify-center sm:text-2xl font-semibold ">
@@ -65,4 +72,4 @@ const CheckAllPassStatus = () => {
   );
 };
 
-export default CheckAllPassStatus;
+export default CheckAllProductStatus;

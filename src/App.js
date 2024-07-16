@@ -1,30 +1,30 @@
 import "./App.css";
 import Header from "./components/Header";
-import Admin from "./components/Admin/Admin";
-import RegularUser from "./components/RegularUser/RegularUser";
+import ConsumerDashboard from "./components/Admin/ConsumerDashboard";
+import RegularUser from "./components/RegularUser/ManufacturerDashboard";
 import { createContext, useState } from "react";
 import { ADMIN_KEY } from "./constants/constants";
 
 const pubKeyData = createContext();
-const passIdContext = createContext();
+const productIdContext = createContext();
 
 function App() {
   const [pubkey, _setPubKey] = useState("");
-  const [passId, _setPassId] = useState();
+  const [productId, setProductId] = useState();
 
   return (
     <div className="App">
       <pubKeyData.Provider value={pubkey}>
         <Header setPubKey={_setPubKey} />
 
-          <passIdContext.Provider value={{passId, _setPassId}}>
+          <productIdContext.Provider value={{productId, setProductId}}>
             <RegularUser />
-            {pubkey.toString() === ADMIN_KEY && <Admin />}
-          </passIdContext.Provider>
+            {pubkey.toString() === ADMIN_KEY && <ConsumerDashboard />}
+          </productIdContext.Provider>
       </pubKeyData.Provider>
     </div>
   );
 }
 
 export default App;
-export { pubKeyData, passIdContext };
+export { pubKeyData, productIdContext };

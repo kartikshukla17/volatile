@@ -1,24 +1,24 @@
 import React, { useState } from "react";
-import PendingPass from "./PendingPass";
+import PendingProduct from "./PendingProduct";
 
-const ApprovePass = () => {
-  const [allPassesListLength, _setAllPassesListLength] = useState(
+const ApproveProduct = () => {
+  const [allProductsListLength, setAllProductsListLength] = useState(
     localStorage.length
   );
 
   const handleRefresh = () => {
-    _setAllPassesListLength(localStorage.length);
+    setAllProductsListLength(localStorage.length);
   };
 
   return (
     <div className="flex flex-col bg-white rounded-lg my-4 items-center border border-black p-4 w-full">
       <div className="bg-black w-full p-2 rounded-md sm:text-2xl font-bold text-center flex justify-between gap-3 items-center text-white">
-        <span>List of Product Scanned :</span>
+        <span>List of Products Scanned :</span>
         <button
           className="text-lg hover:bg-violet-500 bg-pink-700 rounded-md p-1 border-black font-bold text-white"
           onClick={handleRefresh}
         >
-          Clear
+          Refresh
         </button>
       </div>
       <div className="w-full">
@@ -30,8 +30,8 @@ const ApprovePass = () => {
             </tr>
           </thead>
           <tbody className="flex flex-col gap-3 h-80 overflow-scroll">
-            {Array.from({ length: allPassesListLength }, (_, i) => (
-              <PendingPass key={i} pendingPassId={i + 1} pendingPassIndex={i} />
+            {Array.from({ length: allProductsListLength }, (_, i) => (
+              <PendingProduct key={i} pendingProductId={i + 1} pendingProductIndex={i} />
             ))}
           </tbody>
         </table>
@@ -40,4 +40,4 @@ const ApprovePass = () => {
   );
 };
 
-export default ApprovePass;
+export default ApproveProduct;

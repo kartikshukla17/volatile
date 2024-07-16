@@ -5,186 +5,154 @@ use soroban_sdk::{contract, contracttype, contractimpl, log, Env, Symbol, String
 
 #[contracttype]
 #[derive(Clone)]
-pub struct ApprovalStatus {
-    pub approved: u64, 
-    pub pending: u64,  
-    pub expired: u64,  
-    pub total: u64     
+
+pub struct ProductStatus {
+    pub approved: u64,
+    pub pending: u64,
+    pub expired: u64,
+    pub total: u64
 }
- 
 
-
-const ALL_PASS : Symbol = symbol_short!("ALL_PASS");
-
-
+const ALL_PRODUCTS: Symbol = symbol_short!("ALL_PROD");
 
 #[contracttype] 
-pub enum Adminbook { 
-    Admincontrol(u64)
+pub enum AdminBook { 
+    AdminControl(u64)
 }
-
-
 
 #[contracttype]
 #[derive(Clone)] 
-pub struct Admincontrol {
+pub struct AdminControl {
     pub ac_id: u64,   
-    pub out_time: u64, 
+    pub approval_time: u64, 
     pub approval: bool, 
 }  
 
-
-
 #[contracttype] 
-pub enum Passbook { 
-    Pass(u64)
+pub enum ProductBook { 
+    Product(u64)
 }
 
-const COUNT_PASS: Symbol = symbol_short!("C_PASS"); 
-
-
+const COUNT_PRODUCT: Symbol = symbol_short!("C_PROD"); 
 
 #[contracttype]
 #[derive(Clone)] 
-pub struct Pass {
+pub struct Product {
     pub unique_id: u64,
-    pub title: String,
-    pub descrip: String,
-    pub crt_time: u64, 
-    pub in_time: u64,
-    pub isexpired: bool,   
+    pub name: String,
+    pub description: String,
+    pub creation_time: u64, 
+    pub expiration_time: u64,
+    pub is_expired: bool,   
 }  
 
-
 #[contract]
-pub struct GatePassContract;
+pub struct ProductManagementContract;
 
 #[contractimpl]
-impl GatePassContract {
-
+impl ProductManagementContract {
     
-    pub fn create_pass(env: Env, title: String, descrip: String) -> u64 {
-        let mut count_pass: u64 = env.storage().instance().get(&COUNT_PASS).unwrap_or(0);
-            count_pass += 1;
+    pub fn add_product(env: Env, name: String, description: String) -> u64 {
+        let mut count_product: u64 = env.storage().instance().get(&COUNT_PRODUCT).unwrap_or(0);
+        count_product += 1;
         
-    
-        let mut records = Self::view_my_pass(env.clone(), count_pass.clone());   
+        let mut product = Self::view_product(env.clone(), count_product.clone());   
         
-        let ap_records = Self::view_ac_pass_by_unique_id(env.clone(), count_pass.clone());
+        let admin_record = Self::view_admin_control_by_id(env.clone(), count_product.clone());
 
-    
-        if records.isexpired == true && ap_records.approval == false {
-            
-    
-            
+        if product.is_expired == true && admin_record.approval == false {
             let time = env.ledger().timestamp();
     
-            let mut all_pass = Self::view_all_pass_status(env.clone()); 
+            let mut all_products = Self::view_all_product_status(env.clone()); 
     
-                
-                records.title = title;
-                records.descrip = descrip;
-                records.crt_time = time;
-                records.isexpired = false;
+            product.name = name;
+            product.description = description;
+            product.creation_time = time;
+            product.is_expired = false;
             
-                
-                all_pass.pending += 1;
-                all_pass.total = all_pass.total + 1;
+            all_products.pending += 1;
+            all_products.total = all_products.total + 1;
 
-                records.unique_id = all_pass.total.clone();
-                
-                
-                env.storage().instance().set(&Passbook::Pass(records.unique_id.clone()), &records);
-
-        
-                env.storage().instance().set(&ALL_PASS, &all_pass);
-                
-                env.storage().instance().set(&COUNT_PASS, &count_pass);
+            product.unique_id = all_products.total.clone();
+            
+            env.storage().instance().set(&ProductBook::Product(product.unique_id.clone()), &product);
     
-                env.storage().instance().extend_ttl(5000, 5000);
+            env.storage().instance().set(&ALL_PRODUCTS, &all_products);
+            
+            env.storage().instance().set(&COUNT_PRODUCT, &count_product);
 
-            log!(&env, "Pass Created with Pass-ID: {}", records.unique_id.clone());
+            env.storage().instance().extend_ttl(5000, 5000);
 
-            return records.unique_id.clone(); 
+            log!(&env, "Product Added with Product-ID: {}", product.unique_id.clone());
+
+            return product.unique_id.clone(); 
                 
         } else {
-            count_pass -= 1;
-            env.storage().instance().set(&COUNT_PASS, &count_pass);
-            log!(&env, "You can't create a pass! You already have a pending pass");
-            panic!("You can't create a pass!");
+            count_product -= 1;
+            env.storage().instance().set(&COUNT_PRODUCT, &count_product);
+            log!(&env, "You can't add a product! You already have a pending product");
+            panic!("You can't add a product!");
         }
     }
 
-    pub fn approve_pass (env: Env, ac_id: u64) {
-
-        let mut ap_records = Self::view_ac_pass_by_unique_id(env.clone(), ac_id.clone());     
+    pub fn approve_product(env: Env, ac_id: u64) {
+        let mut admin_record = Self::view_admin_control_by_id(env.clone(), ac_id.clone());     
         
-        let records = Self::view_my_pass(env.clone(), ac_id.clone()); 
+        let product = Self::view_product(env.clone(), ac_id.clone()); 
         
-        
-        if ap_records.approval == false && ac_id.clone() <= records.unique_id.clone() {
+        if admin_record.approval == false && ac_id.clone() <= product.unique_id.clone() {
             let time = env.ledger().timestamp(); 
             
-            
-            ap_records.ac_id = ac_id;
-            ap_records.approval = true;
-            ap_records.out_time = time;
+            admin_record.ac_id = ac_id;
+            admin_record.approval = true;
+            admin_record.approval_time = time;
 
-            let mut all_status = Self::view_all_pass_status(env.clone()); 
+            let mut all_status = Self::view_all_product_status(env.clone()); 
             all_status.approved += 1; 
             all_status.pending -= 1;  
             
+            env.storage().instance().set(&ALL_PRODUCTS, &all_status);
             
-            env.storage().instance().set(&ALL_PASS, &all_status);
-
-            
-            env.storage().instance().set(&Adminbook::Admincontrol(ac_id.clone()), &ap_records);
+            env.storage().instance().set(&AdminBook::AdminControl(ac_id.clone()), &admin_record);
             
             env.storage().instance().extend_ttl(5000, 5000);
 
-            log!(&env, "Pass-ID: {}, is now Approved", ac_id);
+            log!(&env, "Product-ID: {}, is now Approved", ac_id);
         } else {
-            log!(&env, "Cannot Approved!!");
-            panic!("Cannot Approved!!")
+            log!(&env, "Cannot Approve!!");
+            panic!("Cannot Approve!!")
         } 
     }
 
-    pub fn expire_pass (env: Env, unique_id: u64) {
-
-        let ap_records = Self::view_ac_pass_by_unique_id(env.clone(), unique_id.clone()); 
+    pub fn expire_product(env: Env, unique_id: u64) {
+        let admin_record = Self::view_admin_control_by_id(env.clone(), unique_id.clone()); 
        
-        let mut records = Self::view_my_pass(env.clone(), unique_id.clone());   
+        let mut product = Self::view_product(env.clone(), unique_id.clone());   
 
-        if ap_records.approval == true && records.isexpired == false {
+        if admin_record.approval == true && product.is_expired == false {
             let time = env.ledger().timestamp();
             
-            records.isexpired = true;
-            records.in_time = time;
+            product.is_expired = true;
+            product.expiration_time = time;
 
-            let mut all_pass = Self::view_all_pass_status(env.clone());
-            all_pass.expired += 1; 
+            let mut all_products = Self::view_all_product_status(env.clone());
+            all_products.expired += 1; 
 
+            env.storage().instance().set(&ALL_PRODUCTS, &all_products);
             
-            env.storage().instance().set(&ALL_PASS, &all_pass);
-            
-            env.storage().instance().set(&Passbook::Pass(unique_id.clone()), &records);
+            env.storage().instance().set(&ProductBook::Product(unique_id.clone()), &product);
             
             env.storage().instance().extend_ttl(5000, 5000);
             
-            log!(&env, "Pass-ID: {}, is now Expired!!", unique_id);
+            log!(&env, "Product-ID: {}, is now Expired!!", unique_id);
         } else {
-            
-            log!(&env, "Either you haven't created your pass, or your pass is not approved yet, or your pass is already expired!!!!");
-            panic!("Either you haven't created your pass, or your pass is not approved yet, or your pass is already expired!!");
+            log!(&env, "Either you haven't added this product, or your product is not approved yet, or your product is already expired!!!!");
+            panic!("Either you haven't added this product, or your product is not approved yet, or your product is already expired!!");
         } 
     }
     
-    
-    
-    pub fn view_all_pass_status (env: Env) -> ApprovalStatus {    
-        
-        env.storage().instance().get(&ALL_PASS).unwrap_or(ApprovalStatus {
-            
+    pub fn view_all_product_status(env: Env) -> ProductStatus {    
+        env.storage().instance().get(&ALL_PRODUCTS).unwrap_or(ProductStatus {
             approved: 0,
             pending: 0,
             expired: 0,
@@ -192,33 +160,25 @@ impl GatePassContract {
         })
     }
 
-
-    
-    pub fn view_my_pass(env: Env, uniqueid: u64) -> Pass {
+    pub fn view_product(env: Env, uniqueid: u64) -> Product {
+        let key = ProductBook::Product(uniqueid.clone()); 
         
-        let key = Passbook::Pass(uniqueid.clone()); 
-        
-        env.storage().instance().get(&key).unwrap_or(Pass {
-        
+        env.storage().instance().get(&key).unwrap_or(Product {
             unique_id: 0,
-            title: String::from_str(&env, "Not_Found"),
-            descrip: String::from_str(&env, "Not_Found"),
-            crt_time: 0,
-            in_time: 0,
-            isexpired: true, 
+            name: String::from_str(&env, "Not_Found"),
+            description: String::from_str(&env, "Not_Found"),
+            creation_time: 0,
+            expiration_time: 0,
+            is_expired: true, 
         })
     }
 
-
-    
-    pub fn view_ac_pass_by_unique_id(env: Env, unique_id: u64) -> Admincontrol {
+    pub fn view_admin_control_by_id(env: Env, unique_id: u64) -> AdminControl {
+        let ac_key = AdminBook::AdminControl(unique_id.clone()); 
         
-        let ac_key = Adminbook::Admincontrol(unique_id.clone()); 
-        
-        env.storage().instance().get(&ac_key).unwrap_or(Admincontrol {
-        
+        env.storage().instance().get(&ac_key).unwrap_or(AdminControl {
             ac_id: 0,
-            out_time: 0,
+            approval_time: 0,
             approval: false,
         })
     }
