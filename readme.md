@@ -11,7 +11,10 @@ Our project Product authenticator dApp is a blockchain based application which w
 
 The vision is to reduce fraud in several industries like food, medicine, defence etc. Fake items in the food, medicine, and defense sectors can lead to severe risks and compromised safety. So, with this application, at every block of production(manufacture, distribution, sellar) they will have to put complete valid information about the product which at the end combines with this blockchain application and helps people consume the right safe product.
 
-<img src = "readmeImages\image1.jpg" width="300" />
+<div align="center">
+<img src = "readmeImages\image1.jpg" width="400" />
+</div>
+
 ## Key features
 
 1. QR Code Scanning: Users can scan the QR code on a product to access its complete history.
@@ -37,7 +40,9 @@ The vision is to reduce fraud in several industries like food, medicine, defence
 - Stellar Blockchain (Testnet)
 - [React.Js] to build the frontend 
 
-<img src = "readmeImages\image2.jpg" width="300" />
+<div align="center">
+<img src = "readmeImages\image2.jpg" width="400" />
+</div>
 
 ## References: 
 
